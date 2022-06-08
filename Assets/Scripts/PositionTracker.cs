@@ -2,43 +2,60 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PositionTracker : MonoBehaviour
-{
+public class PositionTracker : MonoBehaviour {
+
+
+
+
+    public int amt_frames = 600;
 
     private Queue<Vector3> path = new Queue<Vector3>();
-    private bool recordPath = true;
-    private bool replayPath = false;
+
+    enum State { RECORDING, IDLE, REPLAYING }
+
+    private State state = State.IDLE;
+
     // Start is called before the first frame update
-    void Start()
-    {
+    void Start() {
     }
 
-    void FixedUpdate()
-    {
-        if (recordPath && path.Count < 10*60) {
-            print(transform.position);
-            path.Enqueue(transform.position);
-        } else if (recordPath) {
-            //TODO: save path
-            print("replay");
-            recordPath = false;
-            replay();
+    void FixedUpdate() {
+
+        switch (state) {
+            case State.IDLE:
+                break;
+            case State.RECORDING:
+                record();
+                break;
+            case State.REPLAYING:
+                replay();
+                break;
+            default:
+                break;
         }
 
-        if (replayPath && path.Count > 0) {
-            Vector3 pos = path.Dequeue();
-            print(path.Count);
-            print(pos);
-            transform.position = pos;
-        } else if (replayPath) {
-            replayPath = false;
-        }
 
+    }
+
+    void record() {
+        path.Enqueue(transform.position);
+        if(path.Count == amt_frames) {
+            //save path
+            state = State.IDLE;
+            GetComponent<Rigidbody>().isKinematic = true;
+        }
+    }
+
+    public void startReplay() {
+        state = State.REPLAYING;
     }
 
     void replay() {
-        //allow to load path
-        replayPath = true;
+        Vector3 pos = path.Dequeue();
+        transform.position = pos;
+        if(path.Count == 0) {
+            state = State.IDLE;
+        }
     }
 
 }

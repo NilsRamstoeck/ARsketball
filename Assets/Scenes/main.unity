@@ -969,6 +969,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb94a830a6bc868488e6803c660f6d91, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cameraTransform: {fileID: 1302903673}
   cursorChildObject: {fileID: 333424952}
   objectToPlace: {fileID: 6660294577247414958, guid: 47228f1c78bf3214d8f5275dc6e011c5, type: 3}
   ballToThrow: {fileID: 7689384966285140450, guid: d7c936b6f3e3ba241a1ea6c469e2b2ae, type: 3}
