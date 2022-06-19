@@ -1,1 +1,5 @@
-public enum EventType { SAVE, LOAD, POINT, START_REPLAY, PAUSE_REPLAY }
+public enum EventType {
+    SAVE, LOAD, POINT, START_REPLAY, PAUSE_REPLAY, SCORE_UP, RESET,
+    REPLAY_READY,
+    BALL_THROWN
+}

@@ -5,14 +5,15 @@ using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 
 
-public class PositionTracker : MonoBehaviour, EventListener {
+public class Ball : MonoBehaviour, EventListener {
 
 
 
+    public const int amt_frames = 140;
 
-    public int amt_frames = 150;
+    private Queue<Vector3> currentPath = new Queue<Vector3>();
 
-    private Queue<Vector3> path = new Queue<Vector3>();
+    private Vector3[] pathArr;
 
     enum State { RECORDING, IDLE, REPLAYING }
 
@@ -21,6 +22,7 @@ public class PositionTracker : MonoBehaviour, EventListener {
     // Start is called before the first frame update
     void Start() {
         state = State.RECORDING;
+        EventTarget.addEventListener(EventType.START_REPLAY, this);
     }
 
     void FixedUpdate() {
@@ -42,12 +44,15 @@ public class PositionTracker : MonoBehaviour, EventListener {
     }
 
     void record() {
-        path.Enqueue(transform.position);
-        if (path.Count == amt_frames) {
+        currentPath.Enqueue(transform.position);
+        if (currentPath.Count == amt_frames) {
+            pathArr = currentPath.ToArray();
             //save path
             savePath();
             state = State.IDLE;
             GetComponent<Rigidbody>().isKinematic = true;
+            GetComponent<SphereCollider>().enabled = false;
+            EventTarget.dispatchEvent(new Event(EventType.REPLAY_READY, gameObject));
         }
     }
 
@@ -65,32 +70,35 @@ public class PositionTracker : MonoBehaviour, EventListener {
         else file = File.Create(destination);
 
         BinaryFormatter bf = new BinaryFormatter();
-        bf.Serialize(file, Vector3Serializable.convertVector3Array(path.ToArray()));
+        bf.Serialize(file, Vector3Serializable.convertVector3Array(currentPath.ToArray()));
         file.Close();
+        EventTarget.dispatchEvent(new Event(EventType.SAVE, gameObject));
     }
 
     public void startReplay() {
+        currentPath = new Queue<Vector3>(pathArr);
         state = State.REPLAYING;
     }
 
     void replay() {
-        Vector3 pos = path.Dequeue();
-        transform.position = pos;
-        if (path.Count == 0) {
+        if (currentPath.Count == 0) {
             state = State.IDLE;
+            return;
         }
+        Vector3 pos = currentPath.Dequeue();
+        transform.position = pos;
     }
 
     void EventListener.onEvent(Event e) {
+        print(e);
         switch (e.type) {
             case EventType.START_REPLAY:
+                startReplay();
                 break;
             case EventType.PAUSE_REPLAY:
                 break;
             case EventType.LOAD:
                 handleLoadEvent((LoadEvent)e);
-                break;
-            case EventType.SAVE:
                 break;
         }
     }

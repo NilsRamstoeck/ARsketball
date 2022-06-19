@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
-public class ARCursor : MonoBehaviour {
+public class ARCursor : MonoBehaviour, EventListener {
     public Transform cameraTransform;
     public GameObject cursorChildObject;
     public GameObject objectToPlace;
@@ -12,16 +12,18 @@ public class ARCursor : MonoBehaviour {
 
     public bool useCursor = true;
 
-    private enum GameState { PLACE_COURT, THROW_BALL }
+    private enum GameState { PLACE_COURT, THROW_BALL, IDLE, REPLAY }
 
     private GameState state = GameState.PLACE_COURT;
 
+    private GameObject ball;
+
     void Start() {
         cursorChildObject.SetActive(useCursor);
+        EventTarget.addEventListener(EventType.RESET, this);
     }
 
     void Update() {
-        print(state);
         switch (state) {
             case GameState.PLACE_COURT:
                 placeCourtState();
@@ -30,7 +32,7 @@ public class ARCursor : MonoBehaviour {
                 throwBallState();
                 break;
             default:
-                print("Bad state");
+                //print("Bad state");
                 break;
         }
     }
@@ -42,7 +44,9 @@ public class ARCursor : MonoBehaviour {
 
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) {
             if (useCursor) {
-                GameObject.Instantiate(objectToPlace, transform.position, transform.rotation);
+                GameObject court = GameObject.Instantiate(objectToPlace, transform.position, Quaternion.LookRotation(cameraTransform.right, Vector3.up));
+                print(court.transform.rotation);
+
                 cursorChildObject.SetActive(false);
                 state = GameState.THROW_BALL;
             } else {
@@ -57,11 +61,12 @@ public class ARCursor : MonoBehaviour {
     }
 
     void throwBallState() {
-        print(cameraTransform.position);
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) {
             Vector3 position = Camera.main.ScreenToViewportPoint(Input.GetTouch(0).position);
-            GameObject ball = GameObject.Instantiate(ballToThrow, cameraTransform);
-            ball.GetComponent<Rigidbody>().AddForce((cameraTransform.forward * 300 + cameraTransform.up * 100));
+            ball = GameObject.Instantiate(ballToThrow, cameraTransform);
+            ball.GetComponent<Rigidbody>().AddForce((cameraTransform.forward * 3000 + cameraTransform.up * 1000));
+            state = GameState.IDLE;
+            EventTarget.dispatchEvent(new Event(EventType.BALL_THROWN, gameObject));
         }
     }
 
@@ -74,5 +79,11 @@ public class ARCursor : MonoBehaviour {
             transform.position = hits[0].pose.position;
             transform.rotation = hits[0].pose.rotation;
         }
+    }
+
+    public void onEvent(Event e) {
+        if (!ball) return;
+        Destroy(ball);
+        state = GameState.THROW_BALL;
     }
 }
