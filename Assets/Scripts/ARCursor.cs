@@ -42,6 +42,7 @@ public class ARCursor : MonoBehaviour, EventListener {
             UpdateCursor();
         }
 
+        //https://github.com/Novaborn-dev/Get-Started-with-AR
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) {
             if (useCursor) {
                 GameObject court = GameObject.Instantiate(objectToPlace, transform.position, Quaternion.LookRotation(cameraTransform.right, Vector3.up));
@@ -70,6 +71,7 @@ public class ARCursor : MonoBehaviour, EventListener {
         }
     }
 
+    //https://github.com/Novaborn-dev/Get-Started-with-AR
     void UpdateCursor() {
         Vector2 screenPosition = Camera.main.ViewportToScreenPoint(new Vector2(0.5f, 0.5f));
         List<ARRaycastHit> hits = new List<ARRaycastHit>();
